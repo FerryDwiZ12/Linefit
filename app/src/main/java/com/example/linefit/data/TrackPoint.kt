@@ -29,7 +29,9 @@ data class ActivitySummary(
     val splits: List<KilometerSplit>,
     val trackPoints: List<TrackPoint>,
     val avgHeartRate: Int? = null,
-    val locationTag: String = "📍 Tambakboyo"
+    val locationTag: String = "📍 Tambakboyo",
+    val caloriesKcal: Int = (totalDistanceKm * 65).toInt().coerceAtLeast(100),
+    val activityTitle: String = "Morning Walk"
 )
 
 /**

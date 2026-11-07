@@ -8,7 +8,10 @@ import com.example.linefit.data.ActivitySummary
 import com.example.linefit.data.GpxParser
 import com.example.linefit.renderer.AspectRatioOption
 import com.example.linefit.renderer.NeonGlowTheme
+import com.example.linefit.renderer.PresetTheme
+import com.example.linefit.renderer.RoutePosition
 import com.example.linefit.renderer.RouteStyleConfig
+import com.example.linefit.renderer.StatsPosition
 import com.example.linefit.utils.PngExporter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -53,12 +56,68 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    fun updatePresetTheme(theme: com.example.linefit.renderer.PresetTheme) {
+    fun updatePresetTheme(theme: PresetTheme) {
         _routeConfig.update { it.copy(presetTheme = theme) }
     }
 
     fun updateCustomLocation(location: String) {
         _routeConfig.update { it.copy(customLocation = location) }
+    }
+
+    fun updateCustomTitle(title: String) {
+        _routeConfig.update { it.copy(customTitle = title) }
+    }
+
+    fun updateOverrideDistance(distanceKm: Double?) {
+        _routeConfig.update { it.copy(overrideDistanceKm = distanceKm) }
+    }
+
+    fun updateOverrideDuration(duration: String?) {
+        _routeConfig.update { it.copy(overrideDuration = duration) }
+    }
+
+    fun updateOverridePace(pace: String?) {
+        _routeConfig.update { it.copy(overridePace = pace) }
+    }
+
+    fun updateOverrideCalories(calories: Int?) {
+        _routeConfig.update { it.copy(overrideCalories = calories) }
+    }
+
+    fun updateOverrideHeartRate(hr: Int?) {
+        _routeConfig.update { it.copy(overrideHeartRate = hr) }
+    }
+
+    fun updateOverrideElevation(ele: Int?) {
+        _routeConfig.update { it.copy(overrideElevation = ele) }
+    }
+
+    fun updateRoutePosition(pos: RoutePosition) {
+        _routeConfig.update { it.copy(routePosition = pos) }
+    }
+
+    fun updateStatsPosition(pos: StatsPosition) {
+        _routeConfig.update { it.copy(statsPosition = pos) }
+    }
+
+    fun toggleShowTitle(show: Boolean) {
+        _routeConfig.update { it.copy(showTitle = show) }
+    }
+
+    fun toggleShowCalories(show: Boolean) {
+        _routeConfig.update { it.copy(showCalories = show) }
+    }
+
+    fun toggleShowHeartRate(show: Boolean) {
+        _routeConfig.update { it.copy(showHeartRate = show) }
+    }
+
+    fun toggleShowElevation(show: Boolean) {
+        _routeConfig.update { it.copy(showElevation = show) }
+    }
+
+    fun toggleShowLocationTag(show: Boolean) {
+        _routeConfig.update { it.copy(showLocationTag = show) }
     }
 
     fun updateGlowTheme(theme: NeonGlowTheme) {

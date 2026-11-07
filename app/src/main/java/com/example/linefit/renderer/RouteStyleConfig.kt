@@ -44,12 +44,46 @@ enum class PresetTheme(val displayName: String, val category: String) {
     VINTAGE_POSTCARD("Vintage Postcard", "Classic Travel")
 }
 
+enum class RoutePosition(val label: String) {
+    CENTER("Center"),
+    TOP_HEADER("Top Header"),
+    RIGHT_SIDEBAR("Right Sidebar"),
+    BACKGROUND_FULL("Background Full")
+}
+
+enum class StatsPosition(val label: String) {
+    BOTTOM_BAR("Bottom Bar"),
+    TOP_HEADER("Top Header"),
+    OVERLAY_FLOATING("Overlay Floating")
+}
+
 data class RouteStyleConfig(
     val presetTheme: PresetTheme = PresetTheme.THE_VOLT_PULSE,
     val customLocation: String = "📍 Tambakboyo",
+    val customTitle: String = "Morning Walk",
     val glowTheme: NeonGlowTheme = NeonGlowTheme.NEON_GREEN,
     val strokeWidthPx: Float = 12f,
     val glowRadiusPx: Float = 28f,
+    val routePosition: RoutePosition = RoutePosition.CENTER,
+    val statsPosition: StatsPosition = StatsPosition.BOTTOM_BAR,
+    
+    // Optional Manual Overrides
+    val overrideDistanceKm: Double? = null,
+    val overrideDuration: String? = null,
+    val overridePace: String? = null,
+    val overrideCalories: Int? = null,
+    val overrideHeartRate: Int? = null,
+    val overrideElevation: Int? = null,
+
+    // Component Visibility Toggles
+    val showTitle: Boolean = true,
+    val showDistance: Boolean = true,
+    val showTime: Boolean = true,
+    val showPace: Boolean = true,
+    val showCalories: Boolean = true,
+    val showHeartRate: Boolean = true,
+    val showElevation: Boolean = true,
+    val showLocationTag: Boolean = true,
     val showStatsOverlay: Boolean = true,
     val showSplitsChart: Boolean = true,
     val showMiniRouteCard: Boolean = true,
