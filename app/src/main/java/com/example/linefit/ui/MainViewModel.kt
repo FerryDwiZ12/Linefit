@@ -53,6 +53,14 @@ class MainViewModel : ViewModel() {
         }
     }
 
+    fun updatePresetTheme(theme: com.example.linefit.renderer.PresetTheme) {
+        _routeConfig.update { it.copy(presetTheme = theme) }
+    }
+
+    fun updateCustomLocation(location: String) {
+        _routeConfig.update { it.copy(customLocation = location) }
+    }
+
     fun updateGlowTheme(theme: NeonGlowTheme) {
         _routeConfig.update { it.copy(glowTheme = theme) }
     }

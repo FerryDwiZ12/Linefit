@@ -8,7 +8,7 @@ import com.example.linefit.ui.theme.PureWhite
 import com.example.linefit.ui.theme.VoltLime
 
 enum class AspectRatioOption(val label: String, val ratioWidth: Int, val ratioHeight: Int) {
-    STORY_9_16("9:16 (Story/Reels)", 9, 16),
+    STORY_9_16("9:16 (Story)", 9, 16),
     SQUARE_1_1("1:1 (Square)", 1, 1),
     FEED_4_5("4:5 (Feed)", 4, 5)
 }
@@ -21,7 +21,32 @@ enum class NeonGlowTheme(val displayName: String, val glowColor: Color, val core
     PURE_WHITE("Pure White", PureWhite, PureWhite)
 }
 
+enum class PresetTheme(val displayName: String, val category: String) {
+    THE_VOLT_PULSE("The Volt Pulse", "Athletic Studio"),
+    MINIMALIST_GLASS_PILL("Minimalist Glass Pill", "Modern Compact"),
+    PACE_HEATMAP_RIBBON("Pace Heatmap Ribbon", "Performance Data"),
+    TELEMETRY_HUD("Telemetry HUD", "Futuristic HUD"),
+    MAGAZINE_EDITORIAL("Magazine Editorial", "Typography"),
+    SPLIT_ANALYTICAL("Split Analytical", "Performance Data"),
+    TRAIL_HORIZON("Trail Horizon", "Outdoor 3D"),
+    VIEWFINDER_FRAME("Viewfinder Frame", "Camera Overlay"),
+    DUAL_RING_ACTIVITY("Dual Ring Activity", "Activity Gauges"),
+    BRUTALIST_TICKET("Brutalist Ticket", "Brutalist Event"),
+    DOODLE_NOTEBOOK("Doodle Notebook", "Hand Drawn Sketch"),
+    CYBERPUNK_GRID("Cyberpunk Grid", "80s Retrowave"),
+    CHALKBOARD_SKETCH("Chalkboard Sketch", "Textured Chalk"),
+    RETRO_GAMING_PIXEL("Retro Gaming Pixel", "8-Bit Arcade"),
+    MINIMAL_TOPOGRAPHY("Minimal Topography", "Outdoor Contour"),
+    GOLDEN_CHAMPION("Golden Champion", "Luxury Trophy"),
+    STEALTH_CARBON("Stealth Carbon", "Carbon Weave"),
+    STRAVA_SUNSET("Strava Sunset", "Sunset Orange"),
+    NEON_CYBERDREAM("Neon Cyberdream", "Vaporwave Neon"),
+    VINTAGE_POSTCARD("Vintage Postcard", "Classic Travel")
+}
+
 data class RouteStyleConfig(
+    val presetTheme: PresetTheme = PresetTheme.THE_VOLT_PULSE,
+    val customLocation: String = "📍 Tambakboyo",
     val glowTheme: NeonGlowTheme = NeonGlowTheme.NEON_GREEN,
     val strokeWidthPx: Float = 12f,
     val glowRadiusPx: Float = 28f,

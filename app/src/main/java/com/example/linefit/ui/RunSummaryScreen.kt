@@ -8,6 +8,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -17,6 +18,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -26,11 +29,11 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -61,6 +64,7 @@ import com.example.linefit.renderer.AspectRatioOption
 import com.example.linefit.renderer.MercatorProjector
 import com.example.linefit.renderer.NeonGlowTheme
 import com.example.linefit.renderer.NeonRouteRenderer
+import com.example.linefit.renderer.PresetTheme
 import com.example.linefit.renderer.RouteStyleConfig
 import com.example.linefit.ui.theme.BackgroundDark
 import com.example.linefit.ui.theme.CardBorder
@@ -129,16 +133,28 @@ fun RunSummaryScreen(
                 letterSpacing = 2.sp
             )
 
-            // 2. Top Metric: Distance Header
-            TopDistanceHeader(summary = summary)
+            // 2. Custom Location Tag Input
+            LocationTagInputField(
+                location = routeConfig.customLocation,
+                onLocationChanged = { viewModel.updateCustomLocation(it) }
+            )
 
-            // 3. Middle Section: Grid (Route Preview + Time & Pace Cards)
+            // 3. Preset Theme Picker Carousel
+            PresetThemeCarousel(
+                selectedTheme = routeConfig.presetTheme,
+                onThemeSelected = { viewModel.updatePresetTheme(it) }
+            )
+
+            // 4. Top Metric: Distance Header
+            TopDistanceHeader(summary = summary, locationTag = routeConfig.customLocation)
+
+            // 5. Middle Section: Grid (Route Preview + Time & Pace Cards)
             MiddlePreviewGrid(
                 summary = summary,
                 routeConfig = routeConfig
             )
 
-            // 4. Bottom Section: Split Comparison Bar Chart Card
+            // 6. Bottom Section: Split Comparison Bar Chart Card
             SplitComparisonCard(summary = summary)
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -155,7 +171,84 @@ fun RunSummaryScreen(
 }
 
 @Composable
-private fun TopDistanceHeader(summary: ActivitySummary) {
+private fun LocationTagInputField(
+    location: String,
+    onLocationChanged: (String) -> Unit
+) {
+    OutlinedTextField(
+        value = location,
+        onValueChange = onLocationChanged,
+        label = { Text("LOCATION TAG (MANUAL)", style = MaterialTheme.typography.labelSmall) },
+        singleLine = true,
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = VoltLime,
+            unfocusedBorderColor = CardBorder,
+            focusedTextColor = TextPrimary,
+            unfocusedTextColor = TextPrimary,
+            focusedContainerColor = SurfaceCard,
+            unfocusedContainerColor = SurfaceCard
+        )
+    )
+}
+
+@Composable
+private fun PresetThemeCarousel(
+    selectedTheme: PresetTheme,
+    onThemeSelected: (PresetTheme) -> Unit
+) {
+    Column {
+        Text(
+            text = "LAYOUT PRESET (20 THEMES)",
+            style = MaterialTheme.typography.labelMedium,
+            color = TextSecondary,
+            letterSpacing = 1.5.sp
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            contentPadding = PaddingValues(end = 12.dp)
+        ) {
+            items(PresetTheme.entries) { theme ->
+                val selected = selectedTheme == theme
+                Card(
+                    modifier = Modifier
+                        .clickable { onThemeSelected(theme) }
+                        .border(
+                            width = if (selected) 2.dp else 1.dp,
+                            color = if (selected) VoltLime else CardBorder,
+                            shape = RoundedCornerShape(14.dp)
+                        ),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (selected) VoltLime.copy(alpha = 0.15f) else SurfaceCard
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = theme.displayName,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = if (selected) VoltLime else TextPrimary,
+                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+                        )
+                        Text(
+                            text = theme.category,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextSecondary
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TopDistanceHeader(summary: ActivitySummary, locationTag: String) {
     Column {
         Text(
             text = String.format(Locale.US, "%.2f", summary.totalDistanceKm),
@@ -163,7 +256,7 @@ private fun TopDistanceHeader(summary: ActivitySummary) {
             color = TextPrimary
         )
         Text(
-            text = "KILOMETERS COMPLETED",
+            text = "KILOMETERS COMPLETED  •  $locationTag",
             style = MaterialTheme.typography.labelMedium,
             color = VoltLime,
             letterSpacing = 1.8.sp
@@ -182,7 +275,7 @@ private fun MiddlePreviewGrid(
             .height(260.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Left Column: Neon Route Canvas Preview Card (60% width)
+        // Left Column: Route Canvas Preview Card (60% width)
         Card(
             modifier = Modifier
                 .weight(1.3f)
@@ -194,7 +287,7 @@ private fun MiddlePreviewGrid(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(12.dp),
+                    .padding(8.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Canvas(modifier = Modifier.fillMaxSize()) {
@@ -212,12 +305,8 @@ private fun MiddlePreviewGrid(
                             height = size.height,
                             summary = summary,
                             projectedPoints = projectedPoints,
-                            config = routeConfig.copy(
-                                showStatsOverlay = false,
-                                showSplitsChart = false,
-                                showMiniRouteCard = false
-                            ),
-                            isTransparentBg = true
+                            config = routeConfig,
+                            isTransparentBg = false
                         )
                     }
                 }
@@ -457,7 +546,19 @@ private fun CustomizeOverlayBottomSheet(
                 color = VoltLime
             )
 
-            // 1. Glow Color Theme Palette
+            // 1. Location Tag Input
+            LocationTagInputField(
+                location = config.customLocation,
+                onLocationChanged = { viewModel.updateCustomLocation(it) }
+            )
+
+            // 2. Preset Layout Theme Carousel
+            PresetThemeCarousel(
+                selectedTheme = config.presetTheme,
+                onThemeSelected = { viewModel.updatePresetTheme(it) }
+            )
+
+            // 3. Glow Color Theme Palette
             Text(text = "NEON GLOW THEME", style = MaterialTheme.typography.labelMedium)
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -480,7 +581,7 @@ private fun CustomizeOverlayBottomSheet(
                 }
             }
 
-            // 2. Stroke Width Slider
+            // 4. Stroke Width Slider
             Text(text = "LINE THICKNESS (${config.strokeWidthPx.toInt()} px)", style = MaterialTheme.typography.labelMedium)
             Slider(
                 value = config.strokeWidthPx,
@@ -493,7 +594,7 @@ private fun CustomizeOverlayBottomSheet(
                 )
             )
 
-            // 3. Glow Radius Slider
+            // 5. Glow Radius Slider
             Text(text = "GLOW INTENSITY (${config.glowRadiusPx.toInt()} px)", style = MaterialTheme.typography.labelMedium)
             Slider(
                 value = config.glowRadiusPx,
@@ -506,7 +607,7 @@ private fun CustomizeOverlayBottomSheet(
                 )
             )
 
-            // 4. Aspect Ratio Choices
+            // 6. Aspect Ratio Choices
             Text(text = "EXPORT ASPECT RATIO", style = MaterialTheme.typography.labelMedium)
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -532,7 +633,7 @@ private fun CustomizeOverlayBottomSheet(
                 }
             }
 
-            // 5. Overlay Element Toggles
+            // 7. Overlay Element Toggles
             Text(text = "OVERLAY ELEMENTS", style = MaterialTheme.typography.labelMedium)
             ToggleRow(
                 label = "Show Distance/Time Stats Header",

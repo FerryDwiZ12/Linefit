@@ -28,7 +28,8 @@ data class ActivitySummary(
     val elevationGainMeters: Double,
     val splits: List<KilometerSplit>,
     val trackPoints: List<TrackPoint>,
-    val avgHeartRate: Int? = null
+    val avgHeartRate: Int? = null,
+    val locationTag: String = "📍 Tambakboyo"
 )
 
 /**
