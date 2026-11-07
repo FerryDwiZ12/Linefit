@@ -118,11 +118,6 @@ fun RunSummaryScreen(
                     modifier = Modifier.padding(horizontal = 20.dp)
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                // 5 Interactive Studio Tabs
-                StudioTabBar(
-                    selectedTab = selectedTabIndex,
-                    onTabSelected = { selectedTabIndex = it }
-                )
             }
         },
         bottomBar = {
@@ -138,19 +133,79 @@ fun RunSummaryScreen(
                 .padding(innerPadding)
                 .padding(horizontal = 20.dp)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            Spacer(modifier = Modifier.height(8.dp))
+            // ALWAYS VISIBLE TOP REAL-TIME CANVAS PREVIEW CARD
+            LiveCanvasPreviewCard(summary = summary, config = routeConfig)
 
+            // Studio Config Tabs
+            StudioTabBar(
+                selectedTab = selectedTabIndex,
+                onTabSelected = { selectedTabIndex = it }
+            )
+
+            // Dynamic Tab Controls
             when (selectedTabIndex) {
-                0 -> TabImportAndRatio(routeConfig, viewModel, onImportGpxClicked)
-                1 -> TabThemeAndStyling(routeConfig, viewModel)
-                2 -> TabDataAndOverrides(summary, routeConfig, viewModel)
-                3 -> TabCompositionPlacement(routeConfig, viewModel)
-                4 -> TabLivePreviewAndExport(summary, routeConfig, viewModel)
+                0 -> TabThemeAndStyling(routeConfig, viewModel)
+                1 -> TabDataAndOverrides(summary, routeConfig, viewModel)
+                2 -> TabCompositionPlacement(routeConfig, viewModel)
+                3 -> TabImportAndRatio(routeConfig, viewModel, onImportGpxClicked)
             }
 
             Spacer(modifier = Modifier.height(24.dp))
+        }
+    }
+}
+
+// ALWAYS VISIBLE TOP REAL-TIME PREVIEW CARD
+@Composable
+private fun LiveCanvasPreviewCard(
+    summary: ActivitySummary,
+    config: RouteStyleConfig
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(text = "LIVE OVERLAY PREVIEW", style = MaterialTheme.typography.labelMedium, color = VoltLime)
+            Text(text = config.presetTheme.displayName, style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+        }
+
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(300.dp)
+                .border(1.dp, CardBorder, RoundedCornerShape(20.dp)),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = SurfaceCard)
+        ) {
+            Box(
+                modifier = Modifier.fillMaxSize().padding(8.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    val projectedPoints = MercatorProjector.projectToCanvas(
+                        summary.trackPoints,
+                        size.width,
+                        size.height,
+                        paddingPercentage = 0.15f
+                    )
+
+                    drawContext.canvas.nativeCanvas.let { nativeCanvas ->
+                        NeonRouteRenderer.renderOverlay(
+                            canvas = nativeCanvas,
+                            width = size.width,
+                            height = size.height,
+                            summary = summary,
+                            projectedPoints = projectedPoints,
+                            config = config,
+                            isTransparentBg = false
+                        )
+                    }
+                }
+            }
         }
     }
 }
@@ -160,12 +215,12 @@ private fun StudioTabBar(
     selectedTab: Int,
     onTabSelected: (Int) -> Unit
 ) {
-    val tabs = listOf("📂 IMPORT", "🎨 THEME", "✏️ DATA", "📐 LAYOUT", "🚀 PREVIEW")
+    val tabs = listOf("🎨 THEME (20)", "✏️ DATA", "📐 LAYOUT", "📂 IMPORT")
     ScrollableTabRow(
         selectedTabIndex = selectedTab,
         containerColor = BackgroundDark,
         contentColor = VoltLime,
-        edgePadding = 20.dp
+        edgePadding = 0.dp
     ) {
         tabs.forEachIndexed { index, title ->
             Tab(
@@ -184,62 +239,7 @@ private fun StudioTabBar(
     }
 }
 
-// Tab 1: 📂 Import & Ratio
-@Composable
-private fun TabImportAndRatio(
-    config: RouteStyleConfig,
-    viewModel: MainViewModel,
-    onImportGpxClicked: () -> Unit
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Card(
-            modifier = Modifier.fillMaxWidth().border(1.dp, CardBorder, RoundedCornerShape(20.dp)),
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = SurfaceCard)
-        ) {
-            Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(text = "1. IMPORT ROUTE FILE (.GPX)", style = MaterialTheme.typography.titleLarge, color = VoltLime)
-                Text(text = "Import GPX recording from Huawei Watch, Strava, or Garmin.", style = MaterialTheme.typography.bodyMedium, color = TextSecondary)
-                Button(
-                    onClick = onImportGpxClicked,
-                    modifier = Modifier.fillMaxWidth().height(48.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = VoltLime, contentColor = BackgroundDark),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text("SELECT GPX FILE FROM STORAGE", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
-                }
-            }
-        }
-
-        Card(
-            modifier = Modifier.fillMaxWidth().border(1.dp, CardBorder, RoundedCornerShape(20.dp)),
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = SurfaceCard)
-        ) {
-            Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(text = "2. EXPORT ASPECT RATIO", style = MaterialTheme.typography.titleLarge, color = VoltLime)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    AspectRatioOption.entries.forEach { ratio ->
-                        val selected = config.aspectRatio == ratio
-                        OutlinedButton(
-                            onClick = { viewModel.updateAspectRatio(ratio) },
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                containerColor = if (selected) VoltLime else Color.Transparent,
-                                contentColor = if (selected) BackgroundDark else TextPrimary
-                            ),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Text(text = ratio.label, style = MaterialTheme.typography.labelSmall)
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-// Tab 2: 🎨 Theme & Styling
+// Tab 0: 🎨 Theme & Styling
 @Composable
 private fun TabThemeAndStyling(
     config: RouteStyleConfig,
@@ -292,7 +292,7 @@ private fun TabThemeAndStyling(
     }
 }
 
-// Tab 3: ✏️ Data & Overrides
+// Tab 1: ✏️ Data & Overrides
 @Composable
 private fun TabDataAndOverrides(
     summary: ActivitySummary,
@@ -379,7 +379,7 @@ private fun TabDataAndOverrides(
     }
 }
 
-// Tab 4: 📐 Layout Composition
+// Tab 2: 📐 Layout Composition
 @Composable
 private fun TabCompositionPlacement(
     config: RouteStyleConfig,
@@ -456,46 +456,54 @@ private fun TabCompositionPlacement(
     }
 }
 
-// Tab 5: 🚀 Live Preview & Export
+// Tab 3: 📂 Import & Ratio
 @Composable
-private fun TabLivePreviewAndExport(
-    summary: ActivitySummary,
+private fun TabImportAndRatio(
     config: RouteStyleConfig,
-    viewModel: MainViewModel
+    viewModel: MainViewModel,
+    onImportGpxClicked: () -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Text(text = "LIVE OVERLAY PREVIEW", style = MaterialTheme.typography.labelMedium, color = VoltLime)
-
         Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(380.dp)
-                .border(1.dp, CardBorder, RoundedCornerShape(20.dp)),
+            modifier = Modifier.fillMaxWidth().border(1.dp, CardBorder, RoundedCornerShape(20.dp)),
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = SurfaceCard)
         ) {
-            Box(
-                modifier = Modifier.fillMaxSize().padding(8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Canvas(modifier = Modifier.fillMaxSize()) {
-                    val projectedPoints = MercatorProjector.projectToCanvas(
-                        summary.trackPoints,
-                        size.width,
-                        size.height,
-                        paddingPercentage = 0.15f
-                    )
+            Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(text = "1. IMPORT ROUTE FILE (.GPX)", style = MaterialTheme.typography.titleLarge, color = VoltLime)
+                Text(text = "Import GPX recording from Huawei Watch, Strava, or Garmin.", style = MaterialTheme.typography.bodyMedium, color = TextSecondary)
+                Button(
+                    onClick = onImportGpxClicked,
+                    modifier = Modifier.fillMaxWidth().height(48.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = VoltLime, contentColor = BackgroundDark),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("SELECT GPX FILE FROM STORAGE", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
 
-                    drawContext.canvas.nativeCanvas.let { nativeCanvas ->
-                        NeonRouteRenderer.renderOverlay(
-                            canvas = nativeCanvas,
-                            width = size.width,
-                            height = size.height,
-                            summary = summary,
-                            projectedPoints = projectedPoints,
-                            config = config,
-                            isTransparentBg = false
-                        )
+        Card(
+            modifier = Modifier.fillMaxWidth().border(1.dp, CardBorder, RoundedCornerShape(20.dp)),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = SurfaceCard)
+        ) {
+            Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(text = "2. EXPORT ASPECT RATIO", style = MaterialTheme.typography.titleLarge, color = VoltLime)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    AspectRatioOption.entries.forEach { ratio ->
+                        val selected = config.aspectRatio == ratio
+                        OutlinedButton(
+                            onClick = { viewModel.updateAspectRatio(ratio) },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                containerColor = if (selected) VoltLime else Color.Transparent,
+                                contentColor = if (selected) BackgroundDark else TextPrimary
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text(text = ratio.label, style = MaterialTheme.typography.labelSmall)
+                        }
                     }
                 }
             }
@@ -510,7 +518,7 @@ private fun PresetThemeCarousel(
 ) {
     Column {
         Text(
-            text = "LAYOUT PRESET (20 THEMES)",
+            text = "SELECT LAYOUT PRESET (20 THEMES)",
             style = MaterialTheme.typography.labelMedium,
             color = TextSecondary,
             letterSpacing = 1.5.sp
